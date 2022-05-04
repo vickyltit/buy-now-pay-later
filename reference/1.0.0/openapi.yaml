@@ -1,371 +1,829 @@
-################################################################################
-# Copyrights © 2021-2022 Fiserv, Inc. or its affiliates. 
-# Fiserv is a trademark of Fiserv, Inc., 
-# registered or used in the United States and foreign countries, 
-# and may or may not be registered in your country.  
-# All trademarks, service marks, 
-# and trade names referenced in this 
-# material are the property of their 
-# respective owners. This work, including its contents 
-# and programming, is confidential and its use 
-# is strictly limited. This work is furnished only 
-# for use by duly authorized licensees of Fiserv, Inc. 
-# or its affiliates, and their designated agents 
-# or employees responsible for installation or 
-# operation of the products. Any other use, 
-# duplication, or dissemination without the 
-# prior written consent of Fiserv, Inc. 
-# or its affiliates is strictly prohibited. 
-# Except as specified by the agreement under 
-# which the materials are furnished, Fiserv, Inc. 
-# and its affiliates do not accept any liabilities 
-# with respect to the information contained herein 
-# and are not responsible for any direct, indirect, 
-# special, consequential or exemplary damages 
-# resulting from the use of this information. 
-# No warranties, either express or implied, 
-# are granted or extended by this work or 
-# the delivery of this work
-################################################################################
-
-openapi: 3.0.2
+openapi: 3.0.0
 info:
-  title: Dev Portal Tenant APIs.
-  description: To onboard properly into the Fiserv Developer Studio as a tenant each
-    product must support these APIs so that we can retrieve product specific API specifications
-    and documentation.
-  version: 1.0.0
+  title: Fiserv BNPL API
+  version: '1.0'
 servers:
-  - url: https://tenants.fiserv.com/
+  - url: 'http://localhost:3000'
 paths:
-  /v1/products:
-    get:
-      tags:
-        - Tenant
-      x-group-name: Tenant
-      x-proxy-name: products
-      summary: Returns tenant provider API.
-      operationId: TenantProviderID
-      responses:
-        200:
-          description: Tenant provider response. <a href="https://fiserv.com" rel="noopener noreferrer" target="_blank">external link</a> <a href="../docs?path=docs/getting-started/setup-tenant/setup-tenant.md">Setup Tenant</a>
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TenantProviderResponse'
-            text/yaml:
-              schema:
-                $ref: '#/components/schemas/TenantProviderResponse'
-            text/plain:
-              schema:
-                $ref: '#/components/schemas/TenantProviderResponse'
-  /v1/apis:
+  /bnpl/verify-existing-customer:
     post:
+      summary: After the POS/ECOM Select the BNPL option and Enter MobileNumber
       tags:
-        - Specs
-      x-group-name: Specs
-      x-proxy-name: apis
-      summary: Returns OpenAPI Spec.
-      operationId: APISpecProviderId
+        - bnpl
+      operationId: verifyExistingCustomer
       requestBody:
-        description: Filter Request
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/SpecsFilterRequest'
-        required: false
+              $ref: '#/components/schemas/Transaction_Request'
       responses:
-        200:
-          description: ""
-          content: {}
-      x-codegen-request-body-name: Body
-  /v1/docs:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Transaction_Response'
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/call-trusting-social/{txnId}:
     get:
+      summary: Call Trusting Social Api Which will Send OTP to Customer Mobile
       tags:
-        - Documents
-      x-group-name: Documents
-      x-proxy-name: docs
-      summary: Returns Docs in markdown format.
-      operationId: DocsAPIId
+        - bnpl
+      operationId: callTrustingSocial
       parameters:
-        - in: query
-          name: path
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "602bc2fec6018786421639"
+                description: "Acknowledgement Id as Response"
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/validate-trusting-social-otp/{txnId}:
+    get:
+      summary: Validate Trusting Social OTP Sent to Customer to Mobile
+      tags:
+        - bnpl
+      operationId: validateTrustingSocialOtp
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/Acknowledgement-Id'
+        - $ref: '#/components/parameters/Common-request-OTP'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "MB API"
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/get-and-validate-pan-details-show-offers/{txnId}:
+    post:
+      summary: Validate Trusting Social OTP Sent to Customer to Mobile
+      tags:
+        - bnpl
+      operationId: getAdditionalDetailsAndShowOffers
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+        - $ref: '#/components/parameters/Common-request-Name'
+        - $ref: '#/components/parameters/Common-request-PAN'
+        - $ref: '#/components/parameters/Common-request-DOB'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/lender-offer-list-response'
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/request-trusting-social-score:
+    get:
+      summary: Request Trusting Social OTP Sent to Customer to Mobile
+      tags:
+        - bnpl
+      operationId: requestTsScore
+      parameters:
+        - $ref: '#/components/parameters/Common-request-Mobile-Number'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "602bc2fec6018786421639"
+                description: "Acknowledgement Id"
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/trusting-social-score:
+    get:
+      summary: Get the Score From Trusting Social API (Telco Data)
+      tags:
+        - bnpl
+      operationId: getTsScore
+      parameters:
+        - $ref: '#/components/parameters/Acknowledgement-Id'
+        - $ref: '#/components/parameters/Common-request-OTP'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "713"
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/multi-bureau-api-score:
+    post:
+      summary: Get the Score from Multi Bureau's API
+      tags:
+        - bnpl
+      operationId: mbApiScore
+      parameters:
+        - $ref: '#/components/parameters/Common-request-Name'
+        - $ref: '#/components/parameters/Common-request-PAN'
+        - $ref: '#/components/parameters/Common-request-DOB'
+        - $ref: '#/components/parameters/Common-request-Mobile-Number'
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "300"
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/lenders-offers/{txnId}:
+    get:
+      summary: Get Lenders Offers for Existing Customer flow if isExistingCustomer is false
+      tags:
+        - bnpl
+      operationId: getLendersOffers
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/lender-offer-list-response'
+
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+
+  /bnpl/confirm-offer/{txnId}:
+    post:
+      summary: confirm offer
+      tags:
+        - bnpl
+      operationId: confirmOffer
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/offer'
+      parameters:
+        - $ref: '#/components/parameters/TransactionId'
+        - name: lenderName
+          in: query
+          required: true
           schema:
             type: string
-          required: true
-          description: Markdown document path
+          description: Selected Lender Name
+          example: 'Kotak'
       responses:
-        200:
-          description: ""
-          content: {}
-      x-codegen-request-body-name: Body
-  /v1/layouts:
-    get:
-      tags:
-        - Layout
-      x-group-name: Layout
-      x-proxy-name: layouts
-      summary: Returns the product page layout.
-      operationId: LayoutAPIId
-      responses:
-        200:
-          description: This text will appear as description of your response body.
+        '200':
+          description: OK
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PageLayoutResponse'
-            text/yaml:
-              schema:
-                $ref: '#/components/schemas/PageLayoutResponse'
-            text/plain:
-              schema:
-                $ref: '#/components/schemas/PageLayoutResponse'
-  /live:
-    get:
-      tags:
-        - HealthCheck
-      x-group-name: HealthCheck
-      x-proxy-name: live
-      summary: Health check probes.
-      operationId: healthCheckId
-      x-links: 
-        link1: 
-          description: Developer Studio
-          flag: external
-          url:  'https://dev-developerstudio.fiserv.com/'
-        link2: 
-          description: Setup tenant
-          flag: internal
-          url:  '../docs?path=docs/getting-started/setup-tenant/setup-tenant.md'
-        link3: 
-          description: Fiserv Portal
-          flag: external
-          url:  'https://fiserv.com'
-      responses:
-        200:
-          description: Health check.
+                $ref: '#/components/schemas/repayment-schedule-list-response'
+        '400':
+          description: Bad Request
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/LiveProbeResponse'
-  
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+  /bnpl/client-assertion:
+    get:
+      summary: VisionPlus Client Assertion
+      tags:
+        - bnpl
+      operationId: clientAssertion
+      responses:
+        '200':
+          description: OK
+          content:
+            text/html:
+              schema:
+                type: "string"
+                example: "jwt token"
+        '400':
+          description: Bad Request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+        '500':
+          description: Internal Server Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/error-response'
+
 components:
   schemas:
-    LiveProbeResponse:
+    Transaction_Request:
+      title: transactionRequest
       type: object
       properties:
-        message:
+        pgTxnId:
           type: string
-          description: Message
-    PageLayoutResponse:
+          format: uuid
+          title: pgTxnId
+          description: Payment Gateway TransactionId
+          example: d0e45df1-c282-4984-8b61-8256534ec04c
+        category:
+          type: string
+          title: category
+          enum:
+            - PAY_LATER
+        channel:
+          type: string
+          title: channel
+          enum:
+            - OFFLINE
+            - ONLINE
+        countryCode:
+          $ref: '#/components/schemas/Model_CountryCode'
+        mobile:
+          $ref: '#/components/schemas/Model_MobileNumber'
+        amount:
+          $ref: '#/components/schemas/Model_Amount'
+        currency:
+          $ref: '#/components/schemas/Model_CurrencyCode'
+        terminalId:
+          type: string
+          title: terminalId
+          description: Terminal Id
+          example: "82311"
+        merchantId:
+          type: string
+          title: merchantId
+          description: Merchant ID
+          example: "4313141"
+        merchantTxnId:
+          type: string
+          title: merchantTxnId
+          description: Merchant Transaction Id
+          example: "9342131134"
+        mcc:
+          type: string
+          title: mcc
+          description: Merchant Category
+          minLength: 4
+          pattern: '^[0-9]*$'
+          example: "5732"
+        callbackUrl:
+          title: callbackUrl
+          type: string
+          description: Url to be redirected back.
+          example: 'https://ipg.com/txn/pgTxnId=<pgTxn_id>'
+      required:
+        - mobile
+        - amount
+    AcknowledgmentId_Response:
+      title: acknowledgementIdResponse
+      type: object
+      properties:
+        acknowledgementId:
+          $ref: '#/components/schemas/Model_AcknowledgementId'
+    Transaction_Response:
+      title: transactionResponse
+      type: object
+      properties:
+        fromTxnId:
+          type: string
+          format: uuid
+          title: fromTxnId
+          description: BNPL Wrapper TransactionId
+          example: d0e45df1-c282-4984-8b61-8256534ec04c
+        redirectUrl:
+          title: redirectUrl
+          type: string
+          description: Url to be redirected to BNPL.
+          example: 'https://fiserv.bnpl.com/txn/fromTxnId=<fromTxnId>'
+        isNewCustomer:
+          title: isNewCustomer
+          type: boolean
+          description: Flag true for New customer and false for Existing customer
+    Model_CountryCode:
+      type: string
+      title: countryCode
+      description: CountryCode of MobileNumber
+      example: "+91"
+      minLength: 3
+      pattern: '\+?[0-9]*'
+    Model_MobileNumber:
+      type: string
+      title: mobileNumber
+      description: Consumber MobileNumber
+      example: "9940123965"
+      minLength: 10
+      pattern: '^[0-9]*$'
+    Model_RequestedAmount:
+      type: number
+      title: requestedAmount
+      description: Consumer Requested Amount
+      example: 10000.00
+    Model_ProcessInstanceId:
+      type: string
+      format: uuid
+      title: processInstanceId
+      description: BNPL Wrapper ProcessInstanceId
+      example: e0e45df1-c282-4984-8b61-4256534ec04c
+    Model_AcknowledgementId:
+      type: string
+      title: acknowledgementId
+      description: Trust Social Acknowledgement Id
+      example: "602bc2fec6018786421639"
+    error-response:
+      title: ''
       type: array
       items:
-        type: object
-        properties:
-          hero:
-            type: array
-            items:
-              type: object
-              properties:
-                descrption:
-                  type: string
-                  description: Descrption
-                image:
-                  type: string
-                  description: Image
-            description: Hero
-          journey Cards:
-            type: array
-            items:
-              type: object
-              properties:
-                journeyCard:
-                  type: array
-                  items:
-                    type: object
-                    properties:
-                      contextualNavigationCards:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            contextualNavigationCard:
-                              type: array
-                              items:
-                                type: object
-                                properties:
-                                  description:
-                                    type: string
-                                    description: Description
-                                  link:
-                                    type: array
-                                    items:
-                                      type: object
-                                      properties:
-                                        type:
-                                          type: string
-                                          description: Type
-                                        uri:
-                                          type: string
-                                          description: URI
-                                    description: Link
-                                  title:
-                                    type: string
-                                    description: Title
-                              description: ContextualNavigationCard
-                        description: ContextualNavigationCards
-                      description:
-                        type: string
-                        description: Description
-                      link:
-                        type: array
-                        items:
-                          type: object
-                          properties:
-                            type:
-                              type: string
-                              description: Type
-                            uri:
-                              type: string
-                              description: URI
-                        description: Link
-                      title:
-                        type: string
-                        description: Title
-                  description: JourneyCard
-            description: JourneyCards
-    SpecsFilterRequest:
+        $ref: '#/components/schemas/Model-error_ErrorMessage'
+      x-examples:
+        example-1:
+          - id: dd4ba13c-4a3c-4078-a31f-35ac9c07a8f7
+            code: BAD_REQUEST
+            title: Mobile Number must not be empty.
+            detail: Mobile Number must not be empty.
+    Model-error_Code:
+      type: string
+      title: code
+      description: 'Machine readable, unique code of the message related to particular case within operation execution. For complete list of codes please refer to [TBD appropriate page].'
+      x-examples: { }
+      example: BAD_REQUEST
+    Model-error_Detail:
+      type: string
+      title: detail
+      description: Provides additional low-level details about the error to assist with troubleshooting.
+      example: Mobile Number must not be empty.
+    Model-error_ErrorMessage:
+      title: errorMessage
       type: object
       properties:
-        categories:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Name
-              subcategories:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      description: Name
-                description: Subcategories
-          description: Categories
-    TenantProviderResponse:
-      type: object
-      properties:
-        brand:
-          type: string
-          description: Brand
-        brandDescription:
-          type: string
-          description: BrandDescription
-        brandLogoURL:
-          type: string
-          description: BrandLogoURL
-        categories:
-          type: array
-          items:
-            type: object
-            properties:
-              name:
-                type: string
-                description: Name
-              subcategories:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    name:
-                      type: string
-                      description: Name
-                    value:
-                      type: string
-                      description: Value
-                description: Subcategories
-              value:
-                type: string
-                description: Value
-          description: Categories
-        name:
-          type: string
-          description: Name
-        product:
-          type: object
-          properties:
-            apiSpecification:
-              type: string
-              description: APISpecification 
-            description:
-              type: string
-              description: Description
-            documentation:
-              type: string
-              description: Documentation
-            featured:
-              type: boolean
-              description: Featured
-            layout:
-              type: string
-              description: Layout
-            logoURL:
-              type: string
-              description: LogoURL
-          description: Product
-        solution:
-          type: string
-          description: Solution
+        id:
+          $ref: '#/components/schemas/Model-error_Id'
+        code:
+          $ref: '#/components/schemas/Model-error_Code'
         title:
+          $ref: '#/components/schemas/Model-error_Title'
+        detail:
+          $ref: '#/components/schemas/Model-error_Detail'
+    Model-error_Id:
+      type: string
+      title: id
+      description: Error identifier. May be used to locate logs.
+      x-examples: { }
+      format: uuid
+    Model-error_Title:
+      type: string
+      title: title
+      description: Short description of the error.
+      example: Mobile Number must not be empty.
+    Model_DateOfBirth:
+      type: string
+      title: dateOfBirth
+      description: The date of birth of the person
+      format: date
+      example: '1991-07-21'
+    lender-offer-list-response:
+      title: ''
+      type: object
+      properties:
+        mobileNumber:
+          $ref: '#/components/schemas/Model_MobileNumber'
+        requestedAmount:
+          $ref: '#/components/schemas/Model_RequestedAmount'
+        lenderOffers:
+          type: array
+          items:
+            $ref: '#/components/schemas/lender-offer'
+    lender-offer:
+      title: ''
+      type: object
+      properties:
+        lenderName:
           type: string
-          description: Title
-  responses:
-    apiSpecResponseWrapper:
-      description: OpenAPI Spec for the APIs. 
-      content: {}
-    docsResponseWrapper:
-      description: Markdown files.
-      content: {}
-    liveResponse:
-      description: Health check.
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/LiveProbeResponse'
-        text/yaml:
-          schema:
-            $ref: '#/components/schemas/LiveProbeResponse'
-        text/plain:
-          schema:
-            $ref: '#/components/schemas/LiveProbeResponse'
-    productPage:
-      description: This text will appear as description of your response body. 
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/PageLayoutResponse'
-        text/yaml:
-          schema:
-            $ref: '#/components/schemas/PageLayoutResponse'
-        text/plain:
-          schema:
-            $ref: '#/components/schemas/PageLayoutResponse'
-    tenant:
-      description: This text will appear as description of your response body. 
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/TenantProviderResponse'
-        text/yaml:
-          schema:
-            $ref: '#/components/schemas/TenantProviderResponse'
-        text/plain:
-          schema:
-            $ref: '#/components/schemas/TenantProviderResponse'
-  securitySchemes:
-    basic:
-      type: http
-      scheme: basic
+          title: lenderName
+          description: Name of the Lender
+          example: Kodak
+        offers:
+          type: array
+          items:
+            $ref: '#/components/schemas/offer'
+    offer:
+      title: ''
+      type: object
+      properties:
+        tenure:
+          type: integer
+          title: tenure
+          description: Number of Terms.
+          example: 6
+        timePeriod:
+          type: string
+          title: timePeriod
+          description:  Months or Days.
+          example: "3 Months"
+        emi:
+          type: number
+          title: emi
+          description: EMI Amount
+          example: 1000
+        offeredLoanAmount:
+          type: number
+          title: offeredLoanAmount
+          description: Offered Loan Amount
+          example: 2000
+        payBackAmount:
+          type: number
+          title: payBackAmount
+          description: Total Payback Amount
+          example: 3000
+        interestPercentage:
+          type: number
+          title: rateOfInterest
+          description: Rate of Interest (%)
+          example: 0
+        offeredPercentage:
+          type: number
+          title: offeredPercentage
+          description: Loan Offered Percentage (%)
+          example: 0
+        interestPayableAmount:
+          type: number
+          title: interestPayableAmount
+          description: Total Interest Payable Amount
+          example: 587
+    repayment-schedule-list-response:
+      title: ''
+      type: object
+      properties:
+        lenderName:
+          type: string
+          title: lenderName
+          description: Name of the Lender
+          example: Kodak
+        loanAmount:
+          $ref: '#/components/schemas/Model_RequestedAmount'
+        payableAmount:
+          type: number
+          title: payableAmount
+          description: Total Payable Amount
+        schedules:
+          type: array
+          items:
+            $ref: '#/components/schemas/repayment-schedule'
+    repayment-schedule:
+      title: 'repaymentSchedule'
+      type: object
+      properties:
+        repaymentDate:
+          type: string
+          title: repaymentDate
+          description: Repayment Date.
+          example: "Apr 25th, 2022"
+        emi:
+          type: number
+          title: emi
+          description: EMI Amount
+          example: 1000
+    Model_LenderId:
+      type: string
+      title: lenderId
+      description: Lender Id
+      example: 23231
+    Model_OfferId:
+      type: string
+      title: offerId
+      description: Lender Id
+      example: 234242
+    Model_Tenure:
+      type: integer
+      title: tenure
+      description: Number of Terms in Months.
+      example: 3
+    Model_CurrencyCode:
+      type: string
+      maxLength: 3
+      minLength: 3
+      pattern: ^[A-Za-z]{3}$
+      description: ISO 4217 currency code.
+      example: INR
+      enum:
+        - INR
+    Model_Amount:
+      format: double
+      description: |+
+        The monetary value of the payment, in the currency defined by `CurrencyCode`.
+      type: number
+      example: 12000.00
+  requestBodies: { }
+  parameters:
+    Common-request-DOB:
+      name: dateOfBirth
+      in: query
+      required: true
+      schema:
+        type: string
+        format: date
+        example: "1986-05-06"
+      description: Date of Birth of Customer for MB API.
+    Common-request-PurchaseAmount:
+      name: purchasedAmount
+      in: query
+      required: true
+      schema:
+        type: number
+        default: 0
+      description: Amount Purchased by Consumer.
+    Common-request-Amount:
+      name: requestedAmount
+      in: query
+      required: false
+      schema:
+        type: number
+        default: 0
+      description: Amount Requested by Consumer.
+    Common-request-Mobile-Number:
+      name: mobileNumber
+      in: query
+      required: true
+      schema:
+        type: string
+        minLength: 10
+        pattern: '^[0-9]*$'
+        example: 9990001234
+      description: Mobile Number of Consumer
+    Common-request-OTP:
+      name: otp
+      in: query
+      required: true
+      schema:
+        type: string
+        pattern: '^[0-9]*$'
+        maxLength: 4
+        example: 4444
+      description: One Time Password
+    Acknowledgement-Id:
+      name: acknowledgementId
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "602bc2fec6018786421639"
+      description: AcknowledgementId received from Get OTP Trusting Social
+    Common-request-Name:
+      name: customerName
+      in: query
+      required: true
+      schema:
+        type: string
+        example: "Srinivasan"
+      description: Customer Name
+    Common-request-PAN:
+      name: panNumber
+      in: query
+      required: true
+      schema:
+        type: string
+        maxLength: 10
+        example: "XSXPSXXXXE"
+      description: Permanent Account number
+    TransactionId:
+      name: txnId
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: "b4367fff-21ab-4fe0-8c43-51a2f7f3f49b"
+      description: The unique identifier that is allocated to the transaction
+    ProcessInstanceId:
+      name: processInstanceId
+      in: query
+      required: true
+      schema:
+        type: string
+        format: uuid
+        example: "c4367fff-21ab-5fe0-9c43-32a2f7f3f4r5"
+      description: The unique identifier that is allocated to the transaction
+  responses: { }
+tags:
+  - name: bnpl
